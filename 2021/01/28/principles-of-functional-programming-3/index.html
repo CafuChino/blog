@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.cafuchino.cn","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":true,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="00-接上篇说起函数式编程，我觉得与其专注于lodash或者rambda这些实现的函数，我可能更倾向从moment入手。因为他是我用过最多也是最接近函数式编程的库。在我还对js和函数式编程不甚了解的时候，我曾思考过一个问题：为什么moment.js的各个功能函数可以以几乎任何次序无限的链式调用下去？ 最后我得到的认为最满意的结果是：每一个功能函数都是一个对象上的方法，每一个功能方法的返回值都是这个">
+<meta property="og:type" content="article">
+<meta property="og:title" content="函数式编程原理(3)">
+<meta property="og:url" content="https://www.cafuchino.cn/2021/01/28/principles-of-functional-programming-3/index.html">
+<meta property="og:site_name" content="Here&#96;s Chino">
+<meta property="og:description" content="00-接上篇说起函数式编程，我觉得与其专注于lodash或者rambda这些实现的函数，我可能更倾向从moment入手。因为他是我用过最多也是最接近函数式编程的库。在我还对js和函数式编程不甚了解的时候，我曾思考过一个问题：为什么moment.js的各个功能函数可以以几乎任何次序无限的链式调用下去？ 最后我得到的认为最满意的结果是：每一个功能函数都是一个对象上的方法，每一个功能方法的返回值都是这个">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-01-28T10:58:58.000Z">
+<meta property="article:modified_time" content="2021-04-14T12:45:33.013Z">
+<meta property="article:author" content="Cafu Chino">
+<meta property="article:tag" content="Javascript">
+<meta property="article:tag" content="函数式编程">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://www.cafuchino.cn/2021/01/28/principles-of-functional-programming-3/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>函数式编程原理(3) | Here`s Chino</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Here`s Chino</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">夜以继日、自强不息</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">14</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">1</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">14</span></a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/CafuChino" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.cafuchino.cn/2021/01/28/principles-of-functional-programming-3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://chinocdn.cafuchino.cn/pic/20200617010655.png">
+      <meta itemprop="name" content="Cafu Chino">
+      <meta itemprop="description" content="热爱生活热爱开发的杂食动物">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Here`s Chino">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          函数式编程原理(3)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-01-28 18:58:58" itemprop="dateCreated datePublished" datetime="2021-01-28T18:58:58+08:00">2021-01-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-04-14 20:45:33" itemprop="dateModified" datetime="2021-04-14T20:45:33+08:00">2021-04-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/01/28/principles-of-functional-programming-3/" class="post-meta-item leancloud_visitors" data-flag-title="函数式编程原理(3)" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2021/01/28/principles-of-functional-programming-3/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/01/28/principles-of-functional-programming-3/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="00-接上篇"><a href="#00-接上篇" class="headerlink" title="00-接上篇"></a>00-接上篇</h2><p>说起函数式编程，我觉得与其专注于lodash或者rambda这些实现的函数，我可能更倾向从moment入手。因为他是我用过最多也是最接近函数式编程的库。在我还对js和函数式编程不甚了解的时候，我曾思考过一个问题：<strong>为什么moment.js的各个功能函数可以以几乎任何次序无限的链式调用下去？</strong> 最后我得到的认为最满意的结果是：<strong>每一个功能函数都是一个对象上的方法，每一个功能方法的返回值都是这个对象</strong> 。虽然这个想法不甚准确，但是其实已经比较接近函数式编程的本质了。或者说，接近函数式编程的具体实现了。那就是——<strong>“函子”</strong></p>
+<span id="more"></span>
+<h2 id="01-函子——一份带原材料的工具箱"><a href="#01-函子——一份带原材料的工具箱" class="headerlink" title="01-函子——一份带原材料的工具箱"></a>01-函子——一份带原材料的工具箱</h2><p>如果要我不准确但是形象的概括<strong>什么是函子</strong>，我会把它描述成一个带有原材料的工具箱。</p>
+<p>比如说一个最基础的<code>Functor</code>函子：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 一个容器，包裹一个值</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Container</span> </span>&#123;</span><br><span class="line"><span class="comment">// of 静态方法，可以省略 new 关键字创建对象</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">of</span> (value) &#123;</span><br><span class="line"><span class="keyword">return</span> <span class="keyword">new</span> Container(value)</span><br><span class="line">&#125;</span><br><span class="line"><span class="title">constructor</span> (<span class="params">value</span>) &#123;</span><br><span class="line"><span class="built_in">this</span>._value = value</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// map 方法，传入变形关系，将容器里的每一个值映射到另一个容器</span></span><br><span class="line">map (fn) &#123;</span><br><span class="line"><span class="keyword">return</span> Container.of(fn(<span class="built_in">this</span>._value))</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 测试</span></span><br><span class="line">Container.of(<span class="number">3</span>)</span><br><span class="line">.map(<span class="function"><span class="params">x</span> =&gt;</span> x + <span class="number">2</span>)</span><br><span class="line">.map(<span class="function"><span class="params">x</span> =&gt;</span> x * x)</span><br></pre></td></tr></table></figure>
+
+<p>可以看出，我们的函子其实什么都没有做，他只是提供了一个创建自身的静态方法，并且提供了返回“这个容器”的方法。看到这我们就可以迫不及待的来实现一下Moment了，比如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Moment</span></span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="function"><span class="title">of</span>(<span class="params">value</span>)</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Moment(value)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="title">constructor</span>(<span class="params">value</span>)</span>&#123;</span><br><span class="line">        <span class="built_in">this</span>._value = value</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="title">format</span>(<span class="params">str</span>)</span>&#123;</span><br><span class="line">        <span class="comment">// 一些用来格式化的操作</span></span><br><span class="line">        <span class="keyword">return</span> Moment.of(result)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>很显然，我们想调用多少次<code>.format()</code>方法都可以，因为无论进行多少次format，返回的对象上都有format这个方法。</p>
+<p>（当然，Moment内部可能不是这么设计的，这也不是函子的绝对正确用法，不过这个可以很好的体现<code>of</code>这个操作的思想）</p>
+<p>很显然，函子就是链式调用的起源，函子这种返回自身对象的思路使得我们可以近乎无限的链式调用下去。</p>
+<h3 id="MayBe-函子"><a href="#MayBe-函子" class="headerlink" title="MayBe 函子"></a>MayBe 函子</h3><p>当然我们的程序无论如何都不可能完全排除副作用，我们必须接受不确定的输入，或者是进行某些对外界环境的操作。如果一定要要求没有副作用，那么几乎无法使用函数式编程。所以我们要做的事情就是把副作用控制在可以接受的范围。比如，我们在接受外界输入或者是进行io的时候，经常可能遇到空，这就可能存在副作用。Maybe函子可以对外界为空的时候做出处理：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MayBe</span> </span>&#123;</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">of</span> (value)&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> MayBe(value)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="title">constructor</span> (<span class="params">value</span>) &#123;</span><br><span class="line">    <span class="built_in">this</span>._value = value</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 如果对空值变形的话直接返回 值为 null 的函子</span></span><br><span class="line">  map (fn) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">this</span>.isNothing() ? MayBe.of(<span class="literal">null</span>) : MayBe.of(fn(<span class="built_in">this</span>._value))</span><br><span class="line">  &#125;</span><br><span class="line">  isNothing () &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">this</span>._value === <span class="literal">null</span> || <span class="built_in">this</span>._value === <span class="literal">undefined</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 传入具体值</span></span><br><span class="line">MayBe.of(<span class="string">&#x27;Hello World&#x27;</span>)</span><br><span class="line">.map(<span class="function"><span class="params">x</span> =&gt;</span> x.toUpperCase())</span><br><span class="line"><span class="comment">// 传入 null 的情况</span></span><br><span class="line">MayBe.of(<span class="literal">null</span>)</span><br><span class="line">.map(<span class="function"><span class="params">x</span> =&gt;</span> x.toUpperCase())</span><br><span class="line"><span class="comment">// =&gt; MayBe &#123; _value: null &#125;&#123;</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看出，Maybe函子相较于普通函子，多做的一件事就是当传入空的时候直接返回空，而不进行函数运算。这就把副作用控制在了可以接受的范围，但是这样只要中间异步出现空，之后的结果就都是空了。</p>
+<h3 id="Either-函子"><a href="#Either-函子" class="headerlink" title="Either 函子"></a>Either 函子</h3><p>异常也会使函数变的不是纯函数（出现了与预期不同的结果），而Either函子可以用于分支判断，控制异常。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Left</span> </span>&#123;</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">of</span> (value) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> Left(value)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="title">constructor</span> (<span class="params">value</span>) &#123;</span><br><span class="line">    <span class="built_in">this</span>._value = value</span><br><span class="line">  &#125;</span><br><span class="line">  map (fn) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">this</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Right</span> </span>&#123;</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">of</span> (value) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> Right(value)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="title">constructor</span> (<span class="params">value</span>) &#123;</span><br><span class="line">    <span class="built_in">this</span>._value = value</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="title">map</span>(<span class="params">fn</span>)</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> Right.of(fn(<span class="built_in">this</span>._value))</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看出，Either函子是一个普通的Functor配合一个什么都不会做只会返回自身的函子，这样就可以将错误传递下去。</p>
+<h3 id="IO函子"><a href="#IO函子" class="headerlink" title="IO函子"></a>IO函子</h3><p>我们之前有提到过，副作用的一个主要的来源就是IO操作，IO操作可能会带来各种不同的副作用。而这类操作通常都是程序的核心任务类型之一（比如操作数据库，redis，文件等等）。我们不能消除副作用，但是可以控制副作用——通过把分部出现的副作用一次性的执行的方法。这样程序只需要负责纯函数的部分就可以了，副作用可以交给用户来处理。简单的来说就是：把会产生副作用的操作合并在一起执行（使用之前提到过的函数聚合）、</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> fp = <span class="built_in">require</span>(<span class="string">&#x27;lodash/fp&#x27;</span>)</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">IO</span> </span>&#123;</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">of</span> (x) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> IO(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> x</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="title">constructor</span> (<span class="params">fn</span>) &#123;</span><br><span class="line">    <span class="built_in">this</span>._value = fn</span><br><span class="line">  &#125;</span><br><span class="line">  map (fn) &#123;</span><br><span class="line">  <span class="comment">// 把当前的 value 和 传入的 fn 组合成一个新的函数</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> IO(fp.flowRight(fn, <span class="built_in">this</span>._value))</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> io = IO.of(process).map(<span class="function"><span class="params">p</span> =&gt;</span> p.execPath)</span><br><span class="line"><span class="built_in">console</span>.log(io._value())</span><br></pre></td></tr></table></figure>
+
+<h3 id="Task函子"><a href="#Task函子" class="headerlink" title="Task函子"></a>Task函子</h3><p>异步任务的实现过于复杂，我们使用 folktale 中的 Task 来演示。folktale是一个标准的函数式编程库，和 lodash、ramda 不同的是，他没有提供很多功能函数。只提供了一些函数式处理的操作，例如：compose、curry 等，一些函子 Task、Either、MayBe 等<br>folktale(2.3.2) 2.x 中的 Task 和 1.0 中的 Task 区别很大，1.0 中的用法更接近我们现在演示的函子，这里以 2.3.2 来演示</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> io = IO.of(process).map(<span class="function"><span class="params">p</span> =&gt;</span> p.execPath)</span><br><span class="line"><span class="built_in">console</span>.log(io._value())</span><br><span class="line"><span class="keyword">const</span> &#123; compose, curry &#125; = <span class="built_in">require</span>(<span class="string">&#x27;folktale/core/lambda&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> &#123; toUpper, first &#125; = <span class="built_in">require</span>(<span class="string">&#x27;lodash/fp&#x27;</span>)</span><br><span class="line"><span class="comment">// 第一个参数是传入函数的参数个数</span></span><br><span class="line"><span class="keyword">let</span> f = curry(<span class="number">2</span>, <span class="function"><span class="keyword">function</span> (<span class="params">x, y</span>) </span>&#123;</span><br><span class="line"><span class="built_in">console</span>.log(x + y)</span><br><span class="line">&#125;)</span><br><span class="line">f(<span class="number">3</span>, <span class="number">4</span>)</span><br><span class="line">f(<span class="number">3</span>)(<span class="number">4</span>)</span><br><span class="line"><span class="comment">// 函数组合</span></span><br><span class="line"><span class="keyword">let</span> f = compose(toUpper, first)</span><br><span class="line">f([<span class="string">&#x27;one&#x27;</span>, <span class="string">&#x27;two&#x27;</span>])</span><br><span class="line"><span class="keyword">const</span> &#123; task &#125; = <span class="built_in">require</span>(<span class="string">&#x27;folktale/concurrency/task&#x27;</span>)</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">readFile</span>(<span class="params">filename</span>) </span>&#123;</span><br><span class="line"><span class="keyword">return</span> task(<span class="function"><span class="params">resolver</span> =&gt;</span> &#123;</span><br><span class="line">fs.readFile(filename, <span class="string">&#x27;utf-8&#x27;</span>, <span class="function">(<span class="params">err, data</span>) =&gt;</span> &#123;</span><br><span class="line"><span class="keyword">if</span> (err) resolver.reject(err)</span><br><span class="line">resolver.resolve(data)</span><br><span class="line">&#125;)</span><br><span class="line">&#125;)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 调用 run 执行</span></span><br><span class="line">readFile(<span class="string">&#x27;package.json&#x27;</span>)</span><br><span class="line">.map(split(<span class="string">&#x27;\n&#x27;</span>))</span><br><span class="line">.map(find(<span class="function"><span class="params">x</span> =&gt;</span> x.includes(<span class="string">&#x27;version&#x27;</span>)))</span><br><span class="line">.run().listen(&#123;</span><br><span class="line">onRejected: <span class="function"><span class="params">err</span> =&gt;</span> &#123;</span><br><span class="line"><span class="built_in">console</span>.log(err)</span><br><span class="line">&#125;,</span><br><span class="line">onResolved: <span class="function"><span class="params">value</span> =&gt;</span> &#123;</span><br><span class="line"><span class="built_in">console</span>.log(value)</span><br><span class="line">&#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<h3 id="Monad函子"><a href="#Monad函子" class="headerlink" title="Monad函子"></a>Monad函子</h3><p>在JavaScript的Class中并没有提供严格的“私有属性”特性，我们只能通过在属性名前面加上<code>_</code>下划线来约定这个属性是一个私有属性，或是使用Symbol数据类型实现私有属性。当我们需要获取函子中的<code>_value</code>时直接获取“私有属性”显然是不符合约定的。正如我们使用<code>of</code>函数避免使用new来创建新对象一样，我们也可以通过<code>join</code>函数来返回<code>_value</code>来避免直接获取私有属性。一个函子如果具有join和of两个方法并且遵守一些规律就是一个Monad函子。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> fp = <span class="built_in">require</span>(<span class="string">&#x27;lodash/fp&#x27;</span>)</span><br><span class="line"><span class="comment">// IO Monad</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">IO</span> </span>&#123;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">of</span> (x) &#123;</span><br><span class="line"><span class="keyword">return</span> <span class="keyword">new</span> IO(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line"><span class="keyword">return</span> x</span><br><span class="line">&#125;)</span><br><span class="line">&#125;</span><br><span class="line"><span class="title">constructor</span> (<span class="params">fn</span>) &#123;</span><br><span class="line"><span class="built_in">this</span>._value = fn</span><br><span class="line">&#125;</span><br><span class="line">map (fn) &#123;</span><br><span class="line"><span class="keyword">return</span> <span class="keyword">new</span> IO(fp.flowRight(fn, <span class="built_in">this</span>._value))</span><br><span class="line">&#125;</span><br><span class="line">join () &#123;</span><br><span class="line"><span class="keyword">return</span> <span class="built_in">this</span>._value()</span><br><span class="line">&#125;</span><br><span class="line">flatMap (fn) &#123;</span><br><span class="line"><span class="keyword">return</span> <span class="built_in">this</span>.map(fn).join()</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> r = readFile(<span class="string">&#x27;package.json&#x27;</span>)</span><br><span class="line">.map(fp.toUpper)</span><br><span class="line">.flatMap(print)</span><br><span class="line">.join()</span><br></pre></td></tr></table></figure>
+
+<h2 id="02-总结"><a href="#02-总结" class="headerlink" title="02-总结"></a>02-总结</h2><p>有关函数式编程的笔记就记录到这里。概括一下函数式编程的一些知识点：</p>
+<ul>
+<li><p>纯函数对于相同的输入总有相同的输出，而且不会带来副作用</p>
+</li>
+<li><p>柯里化就是把一个多元纯函数变成一个一元纯函数</p>
+</li>
+<li><p>柯里化的原理就是暂存传入的参数，等到参数全部传入再执行，实现原理为闭包</p>
+</li>
+<li><p>柯里化的目的是便于函数组合</p>
+</li>
+<li><p>函数组合的目的是消除洋葱代码，将执行过程进行封装</p>
+</li>
+<li><p>可以利用函子实现函数式编程</p>
+</li>
+<li><p>函子的作用是实现链式调用和控制副作用</p>
+</li>
+<li><p>副作用不可能被消除，但可以被控制</p>
+</li>
+</ul>
+<p>（完）</p>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>如果觉得有帮助就请我喝瓶可乐吧！</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://chinocdn.cafuchino.cn/icon/qq_pic_merged_1592330177064.jpg" alt="Cafu Chino 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://chinocdn.cafuchino.cn/icon/qq_pic_merged_1592330202403.jpg" alt="Cafu Chino 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>CafuChino
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://www.cafuchino.cn/2021/01/28/principles-of-functional-programming-3/" title="函数式编程原理(3)">https://www.cafuchino.cn/2021/01/28/principles-of-functional-programming-3/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Javascript/" rel="tag"># Javascript</a>
+              <a href="/tags/%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B/" rel="tag"># 函数式编程</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/01/26/principles-of-functional-programming-2/" rel="prev" title="函数式编程原理(2)">
+      <i class="fa fa-chevron-left"></i> 函数式编程原理(2)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/03/15/manually-implement-vuerouter/" rel="next" title="手动实现vue-router">
+      手动实现vue-router <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#00-%E6%8E%A5%E4%B8%8A%E7%AF%87"><span class="nav-number">1.</span> <span class="nav-text">00-接上篇</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#01-%E5%87%BD%E5%AD%90%E2%80%94%E2%80%94%E4%B8%80%E4%BB%BD%E5%B8%A6%E5%8E%9F%E6%9D%90%E6%96%99%E7%9A%84%E5%B7%A5%E5%85%B7%E7%AE%B1"><span class="nav-number">2.</span> <span class="nav-text">01-函子——一份带原材料的工具箱</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MayBe-%E5%87%BD%E5%AD%90"><span class="nav-number">2.1.</span> <span class="nav-text">MayBe 函子</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Either-%E5%87%BD%E5%AD%90"><span class="nav-number">2.2.</span> <span class="nav-text">Either 函子</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IO%E5%87%BD%E5%AD%90"><span class="nav-number">2.3.</span> <span class="nav-text">IO函子</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Task%E5%87%BD%E5%AD%90"><span class="nav-number">2.4.</span> <span class="nav-text">Task函子</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Monad%E5%87%BD%E5%AD%90"><span class="nav-number">2.5.</span> <span class="nav-text">Monad函子</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#02-%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">02-总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cafu Chino"
+      src="https://chinocdn.cafuchino.cn/pic/20200617010655.png">
+  <p class="site-author-name" itemprop="name">Cafu Chino</p>
+  <div class="site-description" itemprop="description">热爱生活热爱开发的杂食动物</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">14</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/CafuChino" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;CafuChino" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/ssccpp" title="ZhiHu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;ssccpp" rel="noopener" target="_blank"><i class="fab fa-zhihu fa-fw"></i>ZhiHu</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      相关链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://www.github.com/Rearyard" title="http:&#x2F;&#x2F;www.github.com&#x2F;Rearyard" rel="noopener" target="_blank">Rearyard</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">CafuChino</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/medium-zoom@1/dist/medium-zoom.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'o1CFacB6g2QLmABBB5EBUsT0-gzGzoHsz',
+      appKey     : 'TXNLGnqbdv6nOFDP3LB0voKp',
+      placeholder: "来发表评论吧",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

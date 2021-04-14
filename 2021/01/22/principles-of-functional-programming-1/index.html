@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.cafuchino.cn","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":true,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":"valine","storage":true,"lazyload":false,"nav":null,"activeClass":"valine"},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="00 - 序本系列&#x2F;专栏为拉勾教育-大前端高薪训练营学习笔记，内容为本系列课程的讲授内容、亮点题目分析、重点难点的总结、以及个人的体会。个人感觉拉勾教育比体验过的其他教育平台要更好一点。老师讲授的内容比较全面，相对于自学可以节省很多不必要的走弯路的时间，可以更快的使自己在技术上系统的有所提高。同时随堂测的题目也很用代表性，老师跟进解答很快，推荐和我一样在自学路上遇到瓶颈或者找不到进一步学习方向的同">
+<meta property="og:type" content="article">
+<meta property="og:title" content="函数式编程原理(1)">
+<meta property="og:url" content="https://www.cafuchino.cn/2021/01/22/principles-of-functional-programming-1/index.html">
+<meta property="og:site_name" content="Here&#96;s Chino">
+<meta property="og:description" content="00 - 序本系列&#x2F;专栏为拉勾教育-大前端高薪训练营学习笔记，内容为本系列课程的讲授内容、亮点题目分析、重点难点的总结、以及个人的体会。个人感觉拉勾教育比体验过的其他教育平台要更好一点。老师讲授的内容比较全面，相对于自学可以节省很多不必要的走弯路的时间，可以更快的使自己在技术上系统的有所提高。同时随堂测的题目也很用代表性，老师跟进解答很快，推荐和我一样在自学路上遇到瓶颈或者找不到进一步学习方向的同">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-01-22T06:26:58.000Z">
+<meta property="article:modified_time" content="2021-04-14T12:45:27.899Z">
+<meta property="article:author" content="Cafu Chino">
+<meta property="article:tag" content="Javascript">
+<meta property="article:tag" content="函数式编程">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://www.cafuchino.cn/2021/01/22/principles-of-functional-programming-1/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>函数式编程原理(1) | Here`s Chino</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Here`s Chino</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">夜以继日、自强不息</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">14</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">1</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">14</span></a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/CafuChino" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.cafuchino.cn/2021/01/22/principles-of-functional-programming-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://chinocdn.cafuchino.cn/pic/20200617010655.png">
+      <meta itemprop="name" content="Cafu Chino">
+      <meta itemprop="description" content="热爱生活热爱开发的杂食动物">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Here`s Chino">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          函数式编程原理(1)
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-01-22 14:26:58" itemprop="dateCreated datePublished" datetime="2021-01-22T14:26:58+08:00">2021-01-22</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-04-14 20:45:27" itemprop="dateModified" datetime="2021-04-14T20:45:27+08:00">2021-04-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%8A%80%E6%9C%AF/" itemprop="url" rel="index"><span itemprop="name">技术</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/01/22/principles-of-functional-programming-1/" class="post-meta-item leancloud_visitors" data-flag-title="函数式编程原理(1)" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2021/01/22/principles-of-functional-programming-1/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/01/22/principles-of-functional-programming-1/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="00-序"><a href="#00-序" class="headerlink" title="00 - 序"></a>00 - 序</h2><p>本系列/专栏为<strong>拉勾教育-大前端高薪训练营</strong>学习笔记，内容为本系列课程的讲授内容、亮点题目分析、重点难点的总结、以及个人的体会。个人感觉拉勾教育比体验过的其他教育平台要更好一点。老师讲授的内容比较全面，相对于自学可以节省很多不必要的走弯路的时间，可以更快的使自己在技术上系统的有所提高。同时随堂测的题目也很用代表性，老师跟进解答很快，推荐和我一样在自学路上遇到瓶颈或者找不到进一步学习方向的同学尝试一下。</p>
+<span id="more"></span>
+<h2 id="01-说说函数式编程"><a href="#01-说说函数式编程" class="headerlink" title="01 - 说说函数式编程"></a>01 - 说说函数式编程</h2><p>之前阅读一些经验丰富的开发者的源码，或者使用某些库的时候。我经常发现，有的代码可以一直“点下去”。比如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// maybe</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">badCode</span>(<span class="params">para</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> temp = sth.doSth(para)</span><br><span class="line">    temp = sth.doAnother(temp)</span><br><span class="line">    <span class="keyword">return</span> sth</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// but ?</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">elegentCode</span>(<span class="params">para</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> sth(para).doSth().doAnother()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>或者，当我需要抽象某一个经常会使用到的功能函数，但我不希望把每一个我需要用到的属性全部当作参数传入。然而我又希望这个函数可以用在更多的地方，有更好的可复用性，所以我可能会这样做：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">translateAFile</span>(<span class="params">&#123;</span></span></span><br><span class="line"><span class="function"><span class="params">    safeNoFile:<span class="literal">true</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">default</span>:<span class="string">&#x27;English&#x27;</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    defaultTarget:<span class="string">&#x27;Chinese&#x27;</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    path</span></span></span><br><span class="line"><span class="function"><span class="params">&#125;</span>)</span></span><br></pre></td></tr></table></figure>
+
+<p>但是这样依然非常的“不优雅”，我想到可能可以拆分成更小粒度的函数进行整合，我可能会：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">readFile</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="comment">//do Sth.</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">requestTranslate</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="comment">// do Sth.</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// more function</span></span><br></pre></td></tr></table></figure>
+
+<p>但是这样依然很麻烦，我不仅要记住所有的函数名，函数的参数和返回值，而中间任何一步的错误没有正确捕获，或美誉正确进行转换就会引发错误，大大增加了测试和开发的成本，反而不方便了。在这种情况下，“一直点下去”的方法显然就会优雅很多。但是……这其中是如何实现的呢？这可能要说到函数式编程。</p>
+<h2 id="02-函数式编程的位置"><a href="#02-函数式编程的位置" class="headerlink" title="02 - 函数式编程的位置"></a>02 - 函数式编程的位置</h2><p>面对函数式编程，在考虑如何实现之前，可能要先研究一下函数式编程到底式什么层次的概念。函数式编程是一种编程范式，可以理解为与面向过程编程和面向对象编程同级。</p>
+<p>如果说面向过程专注与逻辑的先后次序，逐步执行；面向对象编程专注与抽象对象和对象的属性和方法；函数式编程的关注点可能是“联系”，从这一点上，它就很“函数”，数学的那种“函数”。</p>
+<h2 id="03-函数式编程依赖的特点和前提"><a href="#03-函数式编程依赖的特点和前提" class="headerlink" title="03 - 函数式编程依赖的特点和前提"></a>03 - 函数式编程依赖的特点和前提</h2><p>因为在JS中函数是<strong>一等公民</strong>，我们可以“随意”的使用函数，函数就是一个普通的对象（可以通过<code>new Function()</code>来创建）。函数可以赋值给变量，可以使用<code>new Function()</code>构造,甚至可以以作为另一个函数的返回值，而这是函数式编程的前提，是高阶函数，柯里化得以实现和应用的必须特性。</p>
+<h3 id="高阶函数"><a href="#高阶函数" class="headerlink" title="高阶函数"></a>高阶函数</h3><p>JS中，函数可以作为参数传递给另一函数，同时也可以作为一个函数的返回值。对于函数作为参数，我想每一个人都不陌生，每天都会使用。当我们需要为一个异步操作提供回调函数的时候，如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">doSomeThing</span>(<span class="params">foo,callback</span>)</span>&#123;</span><br><span class="line">    <span class="comment">// doSth</span></span><br><span class="line">    <span class="keyword">var</span> result = bar.doSth(foo)</span><br><span class="line">    callback()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>此时，一个回调函作为函数的参数被传入，并且在函数中被调用。同时，函数也可作为一个函数的返回值，之前有提到过，函数可以赋值给变量。那么我们可以推断，当一个函数返回一个函数的时候，如果使用一个变量接收这个函数，我们就可以使用<strong>这个变量名+括号</strong>的形式来调用他，就像我们在把函数作为参数的情况一样。比如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">makeFn</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line"><span class="keyword">let</span> msg = <span class="string">&#x27;Hello function&#x27;</span></span><br><span class="line"><span class="keyword">return</span> <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line"><span class="built_in">console</span>.log(msg)</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">const</span> fn = makeFn()</span><br><span class="line">fn()</span><br></pre></td></tr></table></figure>
+
+<p>我们可以看到，由于<strong>闭包</strong>的存在，声明的<code>msg</code>变量的作用域虽然局限在<code>makeFn</code>内部，但是我们在调用的时候，<code>msg</code>依然存在，没有被GC。在这里，它相当于<strong>被作为一种状态保存下来</strong>了。我们运行<code>Fn()</code>依然能顺利的在控制台打印<code>Hello function</code>。</p>
+<p>这就隐隐的和之前的案例产生关联：“<strong>当我需要一些参数，但我不希望每次调用都传入，又想使耦合度降低，提高复用性</strong>”，高阶函数似乎提供了一种方案。他可以通过闭包返回一个包含一个我们需要的状态的函数，然后我们调用“生成的函数”就好了。这就是高阶函数的优点，概括起来说就是：</p>
+<ol>
+<li><p>抽象可以帮我们屏蔽细节，只需要关注与我们的目标</p>
+</li>
+<li><p>高阶函数是用来抽象通用的问题</p>
+</li>
+</ol>
+<p>以上特点的存在，使得高阶函数成为我们函数式编程中一个不可或缺的部分。</p>
+<h3 id=""><a href="#" class="headerlink" title=""></a></h3><h3 id="纯函数"><a href="#纯函数" class="headerlink" title="纯函数"></a>纯函数</h3><p>在讨论纯函数之前，我们先看几个案例：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> numbers = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>]</span><br><span class="line"></span><br><span class="line">numbers.slice(<span class="number">0</span>, <span class="number">3</span>)</span><br><span class="line"><span class="comment">// =&gt; [1, 2, 3]</span></span><br><span class="line">numbers.slice(<span class="number">0</span>, <span class="number">3</span>)</span><br><span class="line"><span class="comment">// =&gt; [1, 2, 3]</span></span><br><span class="line">numbers.slice(<span class="number">0</span>, <span class="number">3</span>)</span><br><span class="line"><span class="comment">// =&gt; [1, 2, 3]</span></span><br><span class="line"></span><br><span class="line">numbers.splice(<span class="number">0</span>, <span class="number">3</span>)</span><br><span class="line"><span class="comment">// =&gt; [1, 2, 3]</span></span><br><span class="line">numbers.splice(<span class="number">0</span>, <span class="number">3</span>)</span><br><span class="line"><span class="comment">// =&gt; [4, 5]</span></span><br><span class="line">numbers.splice(<span class="number">0</span>, <span class="number">3</span>)</span><br><span class="line"><span class="comment">// =&gt; []</span></span><br></pre></td></tr></table></figure>
+
+<p>我们可以看到，对于<code>slice()</code>和<code>splice()</code>，在第一次执行的时候，都会返回数组的前三项。但是当继续执行的时候，<code>splice()</code>的执行结果就变的与预期不同了。假设我们抽象了这一逻辑，那么在多次，多处，或者链式调用的时候，情况就会变的复杂且难以控制。我们把这种情况叫做“函数具有<strong>副作用</strong>”。副作用的产生通常是函数内部改变了外部状态，或函数依赖于某一外部状态。这种“依赖”就会使得函数变的“<strong>不纯</strong>”。副作用的来源通常可能是：</p>
+<ol>
+<li><p>配置文件</p>
+</li>
+<li><p>数据库</p>
+</li>
+<li><p>用户输入</p>
+</li>
+<li><p>文件系统</p>
+</li>
+<li><p>……</p>
+</li>
+</ol>
+<p>与此同时我们也可以得出纯函数的特点：</p>
+<ol>
+<li><p>无论多少次执行，相同的输入总会得到相同的输出</p>
+</li>
+<li><p>纯函数不会保留中间计算的结果，变量是不可变的</p>
+</li>
+</ol>
+<p>因为纯函数的输入和输出我们都可以预期，所以我们很清楚函数的执行结果。这会给我们带来很多好处，比如：</p>
+<ol>
+<li><p><strong>可缓存</strong>——因为相同的输入总会得到相同的输出。所以如果对于一个耗时的操作，我们可以将结果缓存，并且重复执行的时候返回缓存的结果以节省时间和资源。</p>
+</li>
+<li><p><strong>易测试</strong>——因为纯函数的执行不依赖外部状态，只依赖明确的输入，所以可以不受限制的单独进行测试。</p>
+</li>
+<li><p><strong>并行安全</strong>——因为纯函数不需要访问共享的内存数据，也不会产生副作用，每一次执行都是相对独立的，所以在并行环境下可以十分看全的运行纯函数。</p>
+</li>
+</ol>
+<p>那么如何把一个不纯的函数变成纯函数呢？有两种方法，增加参数和硬编码。如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//一个不纯的函数</span></span><br><span class="line"><span class="keyword">let</span> mini = <span class="number">18</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">checkAge</span> (<span class="params">age</span>) </span>&#123;</span><br><span class="line"><span class="keyword">return</span> age &gt;= mini</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 第一种方法</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">checkAgeNew</span>(<span class="params">age, target</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> age &gt;= target</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 第二种方法</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">checkAgeHardcode</span>(<span class="params">age</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">let</span> mini = <span class="number">18</span></span><br><span class="line">    <span class="keyword">return</span> age &gt;= mini</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>但是这两种方法都会带来另外的问题，第一种方法增加了参数，传递变的不方便。而且一但需要修改基准年龄，需要更改所有的调用，一但漏掉就会引发bug。第二种缺点变的更加的明显，众所周知在编程中我们要尽力的避免硬编码。以降低程序的耦合度。难道为了函数式编程我们就不得不向这些缺点妥协么？</p>
+<h2 id="04-柯里化"><a href="#04-柯里化" class="headerlink" title="04 - 柯里化"></a>04 - 柯里化</h2><p>如果说让我用一句话来概括“柯里化”，就是利用闭包先预先“储存”一个参数，再通过高阶函数返回一个已经预先填好一个参数的新函数。简言之——<strong>柯里化过后的函数就是一个函数生成器</strong>。感觉还是有点绕，回到刚才的问题上。我们需要一个检查年龄是否合规的函数。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">checkAge</span> (<span class="params">age</span>) </span>&#123;</span><br><span class="line"><span class="keyword">let</span> min = <span class="number">18</span></span><br><span class="line"><span class="keyword">return</span> age &gt;= min</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 普通纯函数</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">checkAge</span> (<span class="params">min, age</span>) </span>&#123;</span><br><span class="line"><span class="keyword">return</span> age &gt;= min</span><br><span class="line">&#125;</span><br><span class="line">checkAge(<span class="number">18</span>, <span class="number">24</span>)</span><br><span class="line">checkAge(<span class="number">18</span>, <span class="number">20</span>)</span><br><span class="line">checkAge(<span class="number">20</span>, <span class="number">30</span>)</span><br><span class="line"><span class="comment">// 柯里化</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">checkAge</span> (<span class="params">min</span>) </span>&#123;</span><br><span class="line"><span class="keyword">return</span> <span class="function"><span class="keyword">function</span> (<span class="params">age</span>) </span>&#123;</span><br><span class="line"><span class="keyword">return</span> age &gt;= min</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// ES6 写法</span></span><br><span class="line"><span class="keyword">let</span> checkAge = <span class="function"><span class="params">min</span> =&gt;</span> (<span class="function"><span class="params">age</span> =&gt;</span> age &gt;= min)</span><br><span class="line"><span class="keyword">let</span> checkAge18 = checkAge(<span class="number">18</span>)</span><br><span class="line"><span class="keyword">let</span> checkAge20 = checkAge(<span class="number">20</span>)</span><br><span class="line">checkAge18(<span class="number">24</span>)</span><br><span class="line">checkAge18(<span class="number">20</span>)</span><br></pre></td></tr></table></figure>
+
+<p>通过上面的代码，我们可以进一步概括一个可能不那么准确但是非常好理解的概念——“<strong>柯里化就是利用闭包，返回一个已经动态的把其中一部分参数硬编码的函数</strong>”。这样一方面拥有硬编码只需要传递一部分参数的优点，一方面减小了调用的难度（如果需要修改只需要修改柯里化的部分就可以了）</p>
+<h3 id="尝试实现柯里化"><a href="#尝试实现柯里化" class="headerlink" title="尝试实现柯里化"></a>尝试实现柯里化</h3><p>柯里化很方便，但是我们手动把每一个函数都柯里化会非常费神。那么我们如何编写一个函数，帮助我们把多个参数的纯函数柯里化呢？我们可以简单整理一下需求，比如先把这个函数命名为“<code>curry</code>”：</p>
+<ol>
+<li><p>curry函数需要把我们需要柯里化的函数作为输入</p>
+</li>
+<li><p>curry函数需要返回一个函数</p>
+</li>
+<li><p>柯里化过的函数，需要在没有提供足够多的参数的时候“暂存”已经输入的参数，并继续接收输入</p>
+</li>
+<li><p>当输入了完整的参数时，被柯里化的函数就会执行</p>
+</li>
+</ol>
+<p>接下来我们来尝试实现一下这一函数：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">curry</span> (<span class="params">func</span>) </span>&#123;</span><br><span class="line"><span class="keyword">return</span> <span class="function"><span class="keyword">function</span> <span class="title">curriedFn</span> (<span class="params">...args</span>) </span>&#123;</span><br><span class="line"><span class="comment">// 判断实参和形参的个数</span></span><br><span class="line"><span class="keyword">if</span> (args.length &lt; func.length) &#123;</span><br><span class="line"><span class="keyword">return</span> <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line"><span class="keyword">return</span> curriedFn(...args.concat(<span class="built_in">Array</span>.from(<span class="built_in">arguments</span>)))</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 实参和形参个数相同，调用 func，返回结果</span></span><br><span class="line"><span class="keyword">return</span> func(...args)</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>为了实现这一需求，我们首先使用了剩余参数语法，即<code>...args</code>。这个语法允许我们将一个不定数量的参数表示为一个数组，如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">sum</span>(<span class="params">...args</span>)</span>&#123;</span><br><span class="line">    <span class="built_in">console</span>.log(args)</span><br><span class="line">&#125;</span><br><span class="line">sum(<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>) <span class="comment">// [1, 2, 3, 4]</span></span><br></pre></td></tr></table></figure>
+
+<p>同时我们使用了另一特性——一个函数的length属性为他的参数个数，如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">sum</span>(<span class="params">a, b</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a + b</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">console</span>.log(sum.length) <span class="comment">// 2</span></span><br></pre></td></tr></table></figure>
+
+<p>解释了这些之后这一函数就很好理解了，接下来尝试一下它的应用：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">sum</span>(<span class="params">a, b, c</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a + b +c</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> curriedSum = curry(sum)</span><br><span class="line">curriedSum(<span class="number">1</span>)(<span class="number">2</span>)(<span class="number">2</span>) <span class="comment">// 5</span></span><br><span class="line">curriedSum(<span class="number">1</span>, <span class="number">2</span>)(<span class="number">2</span>) <span class="comment">// 5</span></span><br><span class="line">curriedSum(<span class="number">1</span>)(<span class="number">2</span>,<span class="number">2</span>) <span class="comment">// 5</span></span><br></pre></td></tr></table></figure>
+
+<p>不难看出，函数成功的被柯里化了，我们可以分多次，每次传入任意个数的参数即可。函数都将正常地被执行。</p>
+<p>本篇主要讲述了函数式编程的思想，核心功能特点，以及柯里化。在下一篇中我们将进一步的讲述函数式编程以及柯里化的实际应用；以及进一步解决柯里化可能带来的问题。</p>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://t2.lagounews.com/fR8DRXRXcu024">https://t2.lagounews.com/fR8DRXRXcu024</a> 前端福音！这次彻底搞懂 Webpack 原理与实践，做合格前端“配置”工程师！点击链接7天搞定webpack原理和实践，仅需19元√强烈推荐！</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+        <div class="reward-container">
+  <div>如果觉得有帮助就请我喝瓶可乐吧！</div>
+  <button onclick="var qr = document.getElementById('qr'); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';">
+    打赏
+  </button>
+  <div id="qr" style="display: none;">
+      
+      <div style="display: inline-block;">
+        <img src="https://chinocdn.cafuchino.cn/icon/qq_pic_merged_1592330177064.jpg" alt="Cafu Chino 微信支付">
+        <p>微信支付</p>
+      </div>
+      
+      <div style="display: inline-block;">
+        <img src="https://chinocdn.cafuchino.cn/icon/qq_pic_merged_1592330202403.jpg" alt="Cafu Chino 支付宝">
+        <p>支付宝</p>
+      </div>
+
+  </div>
+</div>
+
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>CafuChino
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://www.cafuchino.cn/2021/01/22/principles-of-functional-programming-1/" title="函数式编程原理(1)">https://www.cafuchino.cn/2021/01/22/principles-of-functional-programming-1/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Javascript/" rel="tag"># Javascript</a>
+              <a href="/tags/%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B/" rel="tag"># 函数式编程</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/12/06/vue-source-code-interpretation-1/" rel="prev" title="VUE源码解读（1）">
+      <i class="fa fa-chevron-left"></i> VUE源码解读（1）
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/01/26/principles-of-functional-programming-2/" rel="next" title="函数式编程原理(2)">
+      函数式编程原理(2) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#00-%E5%BA%8F"><span class="nav-number">1.</span> <span class="nav-text">00 - 序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#01-%E8%AF%B4%E8%AF%B4%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text">01 - 说说函数式编程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#02-%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B%E7%9A%84%E4%BD%8D%E7%BD%AE"><span class="nav-number">3.</span> <span class="nav-text">02 - 函数式编程的位置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#03-%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B%E4%BE%9D%E8%B5%96%E7%9A%84%E7%89%B9%E7%82%B9%E5%92%8C%E5%89%8D%E6%8F%90"><span class="nav-number">4.</span> <span class="nav-text">03 - 函数式编程依赖的特点和前提</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%AB%98%E9%98%B6%E5%87%BD%E6%95%B0"><span class="nav-number">4.1.</span> <span class="nav-text">高阶函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link"><span class="nav-number">4.2.</span> <span class="nav-text"></span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BA%AF%E5%87%BD%E6%95%B0"><span class="nav-number">4.3.</span> <span class="nav-text">纯函数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#04-%E6%9F%AF%E9%87%8C%E5%8C%96"><span class="nav-number">5.</span> <span class="nav-text">04 - 柯里化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%9D%E8%AF%95%E5%AE%9E%E7%8E%B0%E6%9F%AF%E9%87%8C%E5%8C%96"><span class="nav-number">5.1.</span> <span class="nav-text">尝试实现柯里化</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cafu Chino"
+      src="https://chinocdn.cafuchino.cn/pic/20200617010655.png">
+  <p class="site-author-name" itemprop="name">Cafu Chino</p>
+  <div class="site-description" itemprop="description">热爱生活热爱开发的杂食动物</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">14</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/CafuChino" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;CafuChino" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.zhihu.com/people/ssccpp" title="ZhiHu → https:&#x2F;&#x2F;www.zhihu.com&#x2F;people&#x2F;ssccpp" rel="noopener" target="_blank"><i class="fab fa-zhihu fa-fw"></i>ZhiHu</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by/4.0/deed.zh" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      相关链接
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="http://www.github.com/Rearyard" title="http:&#x2F;&#x2F;www.github.com&#x2F;Rearyard" rel="noopener" target="_blank">Rearyard</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2018 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">CafuChino</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/medium-zoom@1/dist/medium-zoom.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/pangu/4.0.7/pangu.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'o1CFacB6g2QLmABBB5EBUsT0-gzGzoHsz',
+      appKey     : 'TXNLGnqbdv6nOFDP3LB0voKp',
+      placeholder: "来发表评论吧",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : true,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
